@@ -53,6 +53,8 @@ import (
 const (
 	FileSuffix = ".feature"
 	ConfigFile = "yaks-config.yaml"
+
+	YaksNamespaceEnv = "YAKS_NAMESPACE"
 )
 
 const (
@@ -149,8 +151,8 @@ func (o *testCmdOptions) runTest(source string) error {
 	}
 
 	baseDir := getBaseDir(source)
-	defer runSteps(runConfig.Post, baseDir)
-	if err = runSteps(runConfig.Pre, baseDir); err != nil {
+	defer o.runSteps(runConfig.Post, baseDir)
+	if err = o.runSteps(runConfig.Pre, baseDir); err != nil {
 		return err
 	}
 
@@ -188,8 +190,8 @@ func (o *testCmdOptions) runTestGroup(source string, results *map[string]error) 
 	}
 
 	baseDir := getBaseDir(source)
-	defer runSteps(runConfig.Post, baseDir)
-	if err = runSteps(runConfig.Pre, baseDir); err != nil {
+	defer o.runSteps(runConfig.Post, baseDir)
+	if err = o.runSteps(runConfig.Pre, baseDir); err != nil {
 		return err
 	}
 
@@ -522,7 +524,8 @@ func isDir(fileName string) bool {
 	return false
 }
 
-func runSteps(steps []config.StepConfig, baseDir string) error {
+func (o *testCmdOptions) runSteps(steps []config.StepConfig, baseDir string) error {
+	os.Setenv(YaksNamespaceEnv, o.Namespace)
 	for _, step := range steps {
 		if len(step.Script) > 0 {
 			var scriptFile string
@@ -533,7 +536,14 @@ func runSteps(steps []config.StepConfig, baseDir string) error {
 				scriptFile = step.Script
 			}
 
-			if out, err := exec.Command(scriptFile).Output(); err == nil {
+			content, err := ioutil.ReadFile(scriptFile)
+			if err != nil {
+				return err
+			}
+
+			withEnv := os.ExpandEnv(string(content))
+			cmd := exec.Command("/bin/sh", "-c", withEnv)
+			if out, err := cmd.Output(); err == nil {
 				fmt.Printf("Running script %s: \n%s\n", step.Script, out)
 			} else {
 				fmt.Printf("Failed to run script %s: \n%s\n", step.Script, err)
@@ -542,8 +552,11 @@ func runSteps(steps []config.StepConfig, baseDir string) error {
 		}
 
 		if len(step.Run) > 0 {
-			tokens := strings.Split(step.Run, " ")
-			if out, err := exec.Command(tokens[0], tokens[1:]...).Output(); err == nil {
+			run := os.ExpandEnv(step.Run)
+			tokens := strings.Split(run, " ")
+
+			cmd := exec.Command(tokens[0], tokens[1:]...)
+			if out, err := cmd.Output(); err == nil {
 				fmt.Printf("Running command %s: \n%s\n", step.Run, out)
 			} else {
 				fmt.Printf("Failed to run command %s: \n%s\n", step.Run, err)
