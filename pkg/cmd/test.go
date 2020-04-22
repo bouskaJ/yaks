@@ -56,9 +56,9 @@ const (
 )
 
 const (
-	CucumberOptions = "CUCUMBER_OPTIONS"
-	CucumberGlue = "CUCUMBER_GLUE"
-	CucumberFeatures = "CUCUMBER_FEATURES"
+	CucumberOptions    = "CUCUMBER_OPTIONS"
+	CucumberGlue       = "CUCUMBER_GLUE"
+	CucumberFeatures   = "CUCUMBER_FEATURES"
 	CucumberFilterTags = "CUCUMBER_FILTER_TAGS"
 )
 
@@ -97,8 +97,8 @@ type testCmdOptions struct {
 	env          []string
 	tags         []string
 	features     []string
-	glue		 []string
-	options		 string
+	glue         []string
+	options      string
 }
 
 func (o *testCmdOptions) validateArgs(_ *cobra.Command, args []string) error {
@@ -128,7 +128,7 @@ func (o *testCmdOptions) run(_ *cobra.Command, args []string) error {
 func (o *testCmdOptions) runTest(source string) error {
 	c, err := o.GetCmdClient()
 	if err != nil {
-		return err;
+		return err
 	}
 
 	var runConfig *config.RunConfig
@@ -221,7 +221,7 @@ func getBaseDir(source string) string {
 	if isDir(source) {
 		return source
 	} else {
-		dir, _ := path.Split(source);
+		dir, _ := path.Split(source)
 		return dir
 	}
 }
@@ -251,8 +251,8 @@ func (o *testCmdOptions) getRunConfig(source string) (*config.RunConfig, error) 
 		configFile = path.Join(source, ConfigFile)
 	} else {
 		// search for config file in same directory as given file
-		dir, _ := path.Split(source);
-		configFile = path.Join(dir, ConfigFile);
+		dir, _ := path.Split(source)
+		configFile = path.Join(dir, ConfigFile)
 	}
 
 	runConfig, err := config.LoadConfig(configFile)
@@ -261,13 +261,13 @@ func (o *testCmdOptions) getRunConfig(source string) (*config.RunConfig, error) 
 	}
 
 	if runConfig.Config.Namespace.Name == "" && !runConfig.Config.Namespace.Temporary {
-		runConfig.Config.Namespace.Name = o.Namespace;
+		runConfig.Config.Namespace.Name = o.Namespace
 	}
 
 	return runConfig, nil
 }
 
-func (o *testCmdOptions) createTempNamespace(runConfig *config.RunConfig,c client.Client) (metav1.Object, error) {
+func (o *testCmdOptions) createTempNamespace(runConfig *config.RunConfig, c client.Client) (metav1.Object, error) {
 	namespaceName := "yaks-" + uuid.New().String()
 	namespace, err := initializeTempNamespace(namespaceName, c, o.Context)
 	if err != nil {
@@ -413,25 +413,25 @@ func (o *testCmdOptions) setupEnvSettings(test *v1alpha1.Test, runConfig *config
 	env := make([]string, 0)
 
 	if o.tags != nil {
-		env = append(env, CucumberFilterTags + "=" + strings.Join(o.tags, ","))
+		env = append(env, CucumberFilterTags+"="+strings.Join(o.tags, ","))
 	} else if len(runConfig.Config.Runtime.Cucumber.Tags) > 0 {
-		env = append(env, CucumberFilterTags + "=" + strings.Join(runConfig.Config.Runtime.Cucumber.Tags, ","))
+		env = append(env, CucumberFilterTags+"="+strings.Join(runConfig.Config.Runtime.Cucumber.Tags, ","))
 	}
 
 	if o.features != nil {
-		env = append(env, CucumberFeatures + "=" + strings.Join(o.features, ","))
+		env = append(env, CucumberFeatures+"="+strings.Join(o.features, ","))
 	}
 
 	if o.glue != nil {
-		env = append(env, CucumberGlue + "=" + strings.Join(o.glue, ","))
+		env = append(env, CucumberGlue+"="+strings.Join(o.glue, ","))
 	} else if len(runConfig.Config.Runtime.Cucumber.Glue) > 0 {
-		env = append(env, CucumberGlue + "=" + strings.Join(runConfig.Config.Runtime.Cucumber.Glue, ","))
+		env = append(env, CucumberGlue+"="+strings.Join(runConfig.Config.Runtime.Cucumber.Glue, ","))
 	}
 
 	if len(o.options) > 0 {
-		env = append(env, CucumberOptions + "=" + o.options)
+		env = append(env, CucumberOptions+"="+o.options)
 	} else if len(runConfig.Config.Runtime.Cucumber.Options) > 0 {
-		env = append(env, CucumberOptions + "=" + runConfig.Config.Runtime.Cucumber.Options)
+		env = append(env, CucumberOptions+"="+runConfig.Config.Runtime.Cucumber.Options)
 	}
 
 	if o.env != nil {
